@@ -85,6 +85,8 @@ input[type=range]{width:100%;accent-color:var(--indigo);height:20px}
 .upload-inline .upload-btn,.upload-inline #sampleCsvBtn{min-height:38px;font-size:.72rem;padding:0 11px}
 
 .card-controls{display:flex;align-items:center;gap:8px;flex:none}
+.view-mini{margin:0;color:var(--dim);font-size:.68rem;font-weight:600;font-family:var(--mono)}
+.view-select{min-height:32px;border:1px solid var(--line);border-radius:999px;background:var(--panel-soft);color:var(--text);padding:4px 10px;font-family:var(--mono);font-size:.72rem;max-width:84px}
 .icon-btn{width:32px;height:32px;border-radius:50%;border:1px solid var(--line);background:var(--panel-soft);color:var(--indigo-deep);font-size:.78rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.15s;flex:none}
 .icon-btn:hover{border-color:var(--indigo);background:#eef1ff}
 .upload-btn{flex:1;display:flex;align-items:center;justify-content:center;text-align:center;cursor:pointer;font-size:.72rem}
@@ -212,6 +214,8 @@ input[type=range]{width:100%;accent-color:var(--indigo);height:20px}
 .top h2{margin:0;font-family:var(--disp);font-size:1.02rem;font-weight:600}
 .top p{margin:4px 0 0;color:var(--dim2);font-size:.78rem}
 .card-controls{display:flex;align-items:center;gap:8px;flex:none}
+.view-mini{margin:0;color:var(--dim);font-size:.68rem;font-weight:600;font-family:var(--mono)}
+.view-select{min-height:32px;border:1px solid var(--line);border-radius:999px;background:var(--panel-soft);color:var(--text);padding:4px 10px;font-family:var(--mono);font-size:.72rem;max-width:84px}
 .icon-btn{width:32px;height:32px;border-radius:50%;border:1px solid var(--line);background:var(--panel-soft);color:var(--indigo-deep);font-size:.78rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.15s;flex:none}
 .icon-btn:hover{border-color:var(--indigo);background:#eef1ff}
 
@@ -352,7 +356,6 @@ table.modaltable tr.dominant td{color:var(--indigo-deep);font-weight:600}
     </select>
     <p class="hint">Changes both the stiffness factor and the building's facade — schematic per system, not a literal structural drawing.</p>
   </div>
-
   <div class="field"><label>Number of storeys <span class="val" id="storiesVal">5</span></label><input id="stories" type="range" min="2" max="20" value="5"></div>
   <div class="field"><label>Storey height <span class="val" id="storyHVal">3.4 m</span></label><input id="storyH" type="range" min="27" max="45" value="34"></div>
   <div class="field"><label>Relative stiffness <span class="val" id="stiffVal">75%</span></label><input id="stiffness" type="range" min="20" max="100" value="75"></div>
@@ -451,6 +454,11 @@ table.modaltable tr.dominant td{color:var(--indigo-deep);font-weight:600}
     <div class="top">
       <div><h2>Live building response</h2><p>Deformation visually amplified for clarity · storey height and count to scale · right panel shows real elevation, floor number, live drift and displacement together.</p></div>
       <div class="card-controls">
+        <label class="view-mini" for="responseView">View</label>
+        <select id="responseView" class="view-select" title="Animation representation">
+          <option value="structure" selected>2D</option>
+          <option value="mdof">MDOF</option>
+        </select>
         <button class="icon-btn" id="playBtnBuilding" title="Pause / resume">⏸</button>
         <div class="status live" id="statusText">● Simulation running</div>
       </div>
@@ -483,7 +491,7 @@ table.modaltable tr.dominant td{color:var(--indigo-deep);font-weight:600}
 </main>
 <script>
 const $=id=>document.getElementById(id),
-E={material:$('material'),stories:$('stories'),storyH:$('storyH'),stiffness:$('stiffness'),mass:$('mass'),
+E={material:$('material'),responseView:$('responseView'),stories:$('stories'),storyH:$('storyH'),stiffness:$('stiffness'),mass:$('mass'),
    damping:$('damping'),intensity:$('intensity'),frequency:$('frequency'),motion:$('motion'),
    driftLimit:$('driftLimit'),soft:$('softStorey'),play:$('playBtn'),reset:$('resetBtn'),
    sim:$('sim'),hist:$('history'),floors:$('floors'),profile:$('profile'),motionPreview:$('motionPreview'),exportBtn:$('exportBtn')};
@@ -823,6 +831,89 @@ function firstModeShape(r,soft){
   return firstModeShapeRaw(r,soft)/firstModeShapeRaw(1,soft);
 }
 
+function drawSpring(c,x0,y0,x1,y1,amp,turns){
+  c.beginPath();
+  c.moveTo(x0,y0);
+  const dx=x1-x0,dy=y1-y0,nx=-dy,ny=dx,len=Math.hypot(nx,ny)||1;
+  for(let i=1;i<turns;i++){
+    const t=i/turns,bx=x0+dx*t,by=y0+dy*t,sgn=i%2?1:-1;
+    c.lineTo(bx+nx/len*amp*sgn,by+ny/len*amp*sgn);
+  }
+  c.lineTo(x1,y1);
+  c.stroke();
+}
+
+function drawMDOFSystem(c,m,pts,cx,bw,gy,gap,response,w){
+  const massW=Math.max(34,bw*.64),massH=Math.max(8,gap*.18),side=massW*.74;
+  const labelX=cx+bw/2+22;
+
+  c.setLineDash([4,5]);
+  c.strokeStyle='rgba(95,108,138,.34)';
+  c.lineWidth=1;
+  c.beginPath();
+  c.moveTo(cx,gy-m.s*gap-16);
+  c.lineTo(cx,gy+8);
+  c.stroke();
+  c.setLineDash([]);
+
+  for(let f=1;f<=m.s;f++){
+    const overLimit=floorMaxDrift[f-1]>=m.limit,soft0=m.soft&&f===1;
+    const link=overLimit?'#d0451f':(soft0?'#e08a2b':'#6f7a95');
+    const p0=pts[f-1],p1=pts[f];
+    c.strokeStyle=link;c.lineWidth=1.7;
+    drawSpring(c,p0.x-side,p0.y-massH*.35,p1.x-side,p1.y+massH*.35,Math.min(8,gap*.16),8);
+    c.beginPath();
+    c.moveTo(p0.x+side,p0.y-massH*.35);
+    c.lineTo(p1.x+side,p1.y+massH*.35);
+    c.stroke();
+    c.lineWidth=3;
+    c.beginPath();
+    c.moveTo((p0.x+p1.x)/2+side-7,(p0.y+p1.y)/2);
+    c.lineTo((p0.x+p1.x)/2+side+7,(p0.y+p1.y)/2);
+    c.stroke();
+  }
+
+  for(let f=0;f<=m.s;f++){
+    const p=pts[f],overLimit=f>0&&floorMaxDrift[f-1]>=m.limit,soft0=m.soft&&f===1;
+    const fill=f===0?'#3c4570':(overLimit?'#d0451f':(soft0?'#e08a2b':'#4457e8'));
+    roundRect(c,p.x-massW/2,p.y-massH/2,massW,massH,2.5);
+    c.fillStyle=fill;c.fill();
+    c.fillStyle='#6b7488';c.font='600 10px "IBM Plex Mono",monospace';c.textAlign='left';
+    c.fillText(floorLabel(f,m.s),labelX,p.y+3);
+  }
+
+  roundRect(c,cx-bw*.56,gy-6,bw*1.12,7,2);
+  c.fillStyle='#3c4570';
+  c.fill();
+
+  const rp=pts.at(-1);
+  c.beginPath();
+  c.moveTo(rp.x,gy-m.s*gap-14);
+  c.lineTo(rp.x,gy+6);
+  c.strokeStyle='rgba(68,87,232,.26)';
+  c.lineWidth=1.4;
+  c.stroke();
+
+  const trailPt={x:rp.x,y:rp.y-14};
+  roofTrail.push(trailPt);
+  if(roofTrail.length>26)roofTrail.shift();
+  roofTrail.forEach((p,i)=>{
+    const t=i/roofTrail.length;
+    c.beginPath();c.arc(p.x,p.y,1.3+t*1.4,0,Math.PI*2);
+    c.fillStyle=`rgba(68,87,232,${.04+t*.15})`;c.fill();
+  });
+  c.beginPath();c.arc(trailPt.x,trailPt.y,4,0,Math.PI*2);
+  c.fillStyle='#4457e8';c.fill();
+
+  c.fillStyle='#3c4570';c.font='600 12px "IBM Plex Mono",monospace';c.textAlign='center';
+  c.fillText(response.roof.toFixed(1)+' mm',rp.x,rp.y-26);
+
+  if(Math.abs(m.T-m.tp)<.22){
+    c.fillStyle='#c2410c';c.textAlign='left';c.font='600 11px "IBM Plex Mono",monospace';
+    c.fillText('⚠ near-resonance',w*.08,22);
+  }
+}
+
 function drawBuilding(m,response){
   const{c,w,h}=size(E.sim);
   c.clearRect(0,0,w,h);
@@ -859,6 +950,11 @@ function drawBuilding(m,response){
   // base plinth — always drawn at the fixed anchor point
   roundRect(c,cx-bw*.56,gy-6,bw*1.12,7,2);
   c.fillStyle='#3c4570';c.fill();
+
+  if(E.responseView.value==='mdof'){
+    drawMDOFSystem(c,m,pts,cx,bw,gy,gap,response,w);
+    return;
+  }
 
   const sys=systemStyles[E.material.value];
   const colXAt=(off,f)=>pts[f].x+off*(bw/2);
@@ -1401,7 +1497,7 @@ E.exportBtn.onclick=()=>{
   const m=model();
   const snapshot={
     timestamp:new Date().toISOString(),
-    building:{material:E.material.value,storeys:m.s,storyHeightM:m.sh,relativeStiffnessPct:+E.stiffness.value,
+    building:{material:E.material.value,animationView:E.responseView.value,storeys:m.s,storyHeightM:m.sh,relativeStiffnessPct:+E.stiffness.value,
               relativeMassPct:+E.mass.value,dampingRatioPct:+E.damping.value,softGroundStorey:m.soft,
               heightM:+(m.h.toFixed(2))},
     groundMotion:{profile:E.motion.value,label:m.motion.label,targetPgaG:m.motion.pgaG,
