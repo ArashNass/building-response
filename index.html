@@ -129,7 +129,7 @@ button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid 
 .chartwrap{height:200px;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--panel-soft)}
 #motionPreviewWrap{cursor:grab}
 #motionPreviewWrap.scrubbing{cursor:grabbing}
-.floorwrap{height:236px;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--panel-soft)}
+.floorwrap{height:250px;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--panel-soft)}
 canvas{display:block;width:100%;height:100%}
 
 .note{padding:13px 15px;border-left:3px solid var(--indigo);border-radius:8px;background:#f4f6ff;color:#3c4570;font-size:.75rem;line-height:1.6;font-family:var(--mono)}
@@ -1080,7 +1080,21 @@ function drawFloors(){
   const{c,w,h}=size(E.floors),m=model();
   c.clearRect(0,0,w,h);
   if(!floorMaxDrift.length)return;
-  const legendH=30,p={l:44,r:46,t:14+legendH,b:22},pw=w-p.l-p.r,ph=h-p.t-p.b,
+
+  // --- legend layout: measure real text widths and wrap onto as many rows as the canvas needs ---
+  const legendFont='700 8px "IBM Plex Mono",monospace',rowGap=13,legendL=10,legendR=w-10;
+  c.font=legendFont;
+  const chips=[...DAMAGE_STATES.map(st=>({type:'state',color:st.color,label:st.name.toUpperCase()})),
+               {type:'limit',label:'SELECTED THRESHOLD '+m.limit.toFixed(2)+'%'}];
+  const rows=[[]];let rowW=legendL;
+  chips.forEach(ch=>{
+    const chipW=14+c.measureText(ch.label).width+18;
+    if(rowW+chipW>legendR&&rows.at(-1).length){rows.push([]);rowW=legendL;}
+    rows.at(-1).push(ch);rowW+=chipW;
+  });
+  const legendH=rows.length*rowGap+6;
+
+  const p={l:44,r:46,t:14+legendH,b:22},pw=w-p.l-p.r,ph=h-p.t-p.b,
         n=floorMaxDrift.length,
         rawMax=Math.max(m.limit*1.6,...floorMaxDrift,.01),
         step=rawMax>3?1:.5,
@@ -1088,18 +1102,23 @@ function drawFloors(){
         rowH=ph/n,
         xAt=v=>p.l+(v/maxVal)*pw;
 
-  // legend row 1: damage states
-  c.font='700 8px "IBM Plex Mono",monospace';c.textAlign='left';
-  let lx=p.l;
-  DAMAGE_STATES.forEach(st=>{
-    c.fillStyle=st.color;roundRect(c,lx,6,8,8,2);c.fill();
-    c.fillStyle='#5a6376';c.fillText(st.name.toUpperCase(),lx+11,13);
-    lx+=st.name.length*5.4+26;
+  // draw legend rows
+  c.font=legendFont;c.textAlign='left';
+  rows.forEach((row,ri)=>{
+    let lx=legendL,ly=6+ri*rowGap;
+    row.forEach(ch=>{
+      if(ch.type==='state'){
+        c.fillStyle=ch.color;roundRect(c,lx,ly,8,8,2);c.fill();
+        c.fillStyle='#5a6376';c.fillText(ch.label,lx+11,ly+7);
+        lx+=14+c.measureText(ch.label).width+18;
+      }else{
+        c.strokeStyle='#3c4570';c.setLineDash([3,3]);c.lineWidth=1.2;
+        c.beginPath();c.moveTo(lx,ly+4);c.lineTo(lx+14,ly+4);c.stroke();c.setLineDash([]);
+        c.fillStyle='#3c4570';c.fillText(ch.label,lx+19,ly+7);
+        lx+=14+c.measureText(ch.label).width+18;
+      }
+    });
   });
-  // legend row 2: limit line
-  c.strokeStyle='#3c4570';c.setLineDash([3,3]);c.lineWidth=1.2;
-  c.beginPath();c.moveTo(p.l,22);c.lineTo(p.l+14,22);c.stroke();c.setLineDash([]);
-  c.fillStyle='#3c4570';c.fillText('SELECTED THRESHOLD '+m.limit.toFixed(2)+'%',p.l+19,25);
 
   // vertical gridlines with % ticks — same scale (maxVal) as the bars below
   c.font='600 8px "IBM Plex Mono",monospace';
