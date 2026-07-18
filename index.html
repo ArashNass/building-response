@@ -132,7 +132,7 @@ button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid 
 .floorwrap{height:250px;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--panel-soft)}
 canvas{display:block;width:100%;height:100%}
 
-.note{padding:13px 15px;border-left:3px solid var(--indigo);border-radius:8px;background:#f4f6ff;color:#3c4570;font-size:.75rem;line-height:1.6;font-family:var(--mono)}
+.note{padding:10px 13px;border-left:3px solid var(--indigo);border-radius:8px;background:#f4f6ff;color:#6b7390;font-size:.68rem;line-height:1.55;font-family:var(--sans)}
 .note b{color:#2a3266}
 .foot{text-align:center;margin-top:22px;color:var(--dim2);font-size:.7rem;font-family:var(--mono)}
 
@@ -234,7 +234,7 @@ table.modaltable tr:last-child td{border-bottom:none}
 table.modaltable td.num{text-align:right}
 table.modaltable tr.dominant td{color:var(--indigo-deep);font-weight:600}
 
-.note{padding:13px 15px;border-left:3px solid var(--indigo);border-radius:8px;background:#f4f6ff;color:#3c4570;font-size:.75rem;line-height:1.6;font-family:var(--mono)}
+.note{padding:10px 13px;border-left:3px solid var(--indigo);border-radius:8px;background:#f4f6ff;color:#6b7390;font-size:.68rem;line-height:1.55;font-family:var(--sans)}
 .note b{color:#2a3266}
 .foot{text-align:center;margin-top:22px;color:var(--dim2);font-size:.7rem;font-family:var(--mono)}
 
@@ -459,7 +459,7 @@ table.modaltable tr.dominant td{color:var(--indigo-deep);font-weight:600}
     </div>
   </section>
 
-  <div class="note"><b>Engineering note —</b> This uses a simplified first-mode dynamic model only (no second-mode or higher-mode component is added to the displacement or drift results). Period estimate follows a height-based empirical form similar in spirit to code approximations (e.g. ASCE 7 Ct·h^x), scaled by a relative stiffness/mass/material factor. Interstorey drift is an illustrative indicator derived from the same displacement model, not a code-calibrated drift ratio, and the selectable thresholds are illustrative reference points only — not values drawn from a specific code, occupancy class, or structural system. Displacement is not artificially capped, so at very low damping and near-exact resonance the model can produce physically implausible magnitudes (a real building would fail structurally long before reaching them) — that is expected linear-model behaviour, not a numerical error. It is suitable for education and demonstration only — it is not a substitute for response-spectrum or time-history analysis, and must not be used for structural design or code compliance.</div>
+  <div class="note"><b>Engineering note —</b> Simplified first-mode model only; period is an empirical estimate and drift thresholds are illustrative, not code-based. Displacement isn't artificially capped, so extreme resonance cases can look unrealistic. For education only — not for structural design or code compliance.</div>
 
 </div>
 </section>
