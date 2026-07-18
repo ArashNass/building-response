@@ -129,7 +129,7 @@ button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid 
 .chartwrap{height:200px;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--panel-soft)}
 #motionPreviewWrap{cursor:grab}
 #motionPreviewWrap.scrubbing{cursor:grabbing}
-.floorwrap{height:200px;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--panel-soft)}
+.floorwrap{height:236px;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--panel-soft)}
 canvas{display:block;width:100%;height:100%}
 
 .note{padding:13px 15px;border-left:3px solid var(--indigo);border-radius:8px;background:#f4f6ff;color:#3c4570;font-size:.75rem;line-height:1.6;font-family:var(--mono)}
@@ -454,7 +454,7 @@ table.modaltable tr.dominant td{color:var(--indigo-deep);font-weight:600}
       <div class="chartwrap"><canvas id="history"></canvas></div>
     </div>
     <div class="card chartcard">
-      <div class="top"><div><h2>Drift by storey</h2><p>Peak drift ratio per floor (%), with numeric values and the selected code limit.</p></div></div>
+      <div class="top"><div><h2>Drift by storey</h2><p>Peak drift ratio per floor (%), colour-coded by illustrative damage state, relative to the selected reference threshold.</p></div></div>
       <div class="floorwrap"><canvas id="floors"></canvas></div>
     </div>
   </section>
@@ -1065,39 +1065,69 @@ function drawHistory(){
   c.fillStyle='#5566d6';c.fillText('peak ±'+mr.toFixed(0)+'mm',p.l+2,p.t+ph-6);
 }
 
+const DAMAGE_STATES=[
+  {name:'None / Minor',frac:.5,color:'#8fb8ff'},
+  {name:'Moderate',frac:1,color:'#f5c344'},
+  {name:'Extensive',frac:1.5,color:'#f0923c'},
+  {name:'Severe',frac:Infinity,color:'#d0451f'}
+];
+function damageState(v,limit){
+  for(const st of DAMAGE_STATES){if(v<limit*st.frac)return st}
+  return DAMAGE_STATES.at(-1);
+}
+
 function drawFloors(){
   const{c,w,h}=size(E.floors),m=model();
   c.clearRect(0,0,w,h);
   if(!floorMaxDrift.length)return;
-  const p={l:34,r:38,t:24,b:22},pw=w-p.l-p.r,ph=h-p.t-p.b,
-        maxVal=Math.max(m.limit*1.3,...floorMaxDrift,.01),
-        rowH=ph/floorMaxDrift.length;
+  const legendH=30,p={l:44,r:46,t:14+legendH,b:22},pw=w-p.l-p.r,ph=h-p.t-p.b,
+        n=floorMaxDrift.length,
+        maxVal=Math.max(m.limit*1.6,...floorMaxDrift,.01),
+        rowH=ph/n,
+        xAt=v=>p.l+Math.min(v,maxVal)/maxVal*pw;
 
-  // legend
-  c.font='700 9px "IBM Plex Mono",monospace';
-  c.fillStyle='#4457e8';c.fillRect(p.l,8,8,8);
-  c.fillStyle='#5a6376';c.fillText('DRIFT %',p.l+11,15);
-  c.strokeStyle='#d0451f';c.setLineDash([3,3]);c.lineWidth=1;
-  c.beginPath();c.moveTo(p.l+72,12);c.lineTo(p.l+86,12);c.stroke();c.setLineDash([]);
-  c.fillStyle='#c2410c';c.fillText('LIMIT '+m.limit.toFixed(2)+'%',p.l+90,15);
-
-  c.font='9px "IBM Plex Mono",monospace';
-  floorMaxDrift.forEach((v,i)=>{
-    const y=p.t+i*rowH,barW=Math.max(2,(v/maxVal)*pw),over=v>=m.limit;
-    roundRect(c,p.l,y+rowH*.18,pw,rowH*.64,3);c.fillStyle='#eef1f7';c.fill();
-    roundRect(c,p.l,y+rowH*.18,barW,rowH*.64,3);c.fillStyle=over?'#d0451f':'#4457e8';c.fill();
-    c.fillStyle='#8a93a6';c.textAlign='right';c.fillText(floorLabel(i+1,m.s),p.l-4,y+rowH*.62);
-    c.fillStyle=over?'#c2410c':'#5a6376';c.textAlign='left';
-    c.fillText(v.toFixed(2)+'%',p.l+pw+5,y+rowH*.62);
+  // legend row 1: damage states
+  c.font='700 8px "IBM Plex Mono",monospace';c.textAlign='left';
+  let lx=p.l;
+  DAMAGE_STATES.forEach(st=>{
+    c.fillStyle=st.color;roundRect(c,lx,6,8,8,2);c.fill();
+    c.fillStyle='#5a6376';c.fillText(st.name.toUpperCase(),lx+11,13);
+    lx+=st.name.length*5.4+26;
   });
-  const limX=p.l+(m.limit/maxVal)*pw;
-  c.strokeStyle='#d0451f';c.setLineDash([3,3]);c.lineWidth=1;
-  c.beginPath();c.moveTo(limX,p.t-2);c.lineTo(limX,h-p.b+2);c.stroke();c.setLineDash([]);
+  // legend row 2: limit line
+  c.strokeStyle='#3c4570';c.setLineDash([3,3]);c.lineWidth=1.2;
+  c.beginPath();c.moveTo(p.l,22);c.lineTo(p.l+14,22);c.stroke();c.setLineDash([]);
+  c.fillStyle='#3c4570';c.fillText('SELECTED THRESHOLD '+m.limit.toFixed(2)+'%',p.l+19,25);
 
-  // x-axis ticks
-  c.fillStyle='#9099ac';c.font='600 8px "IBM Plex Mono",monospace';c.textAlign='left';
-  c.fillText('0%',p.l,h-6);
-  c.textAlign='right';c.fillText(maxVal.toFixed(1)+'%',p.l+pw,h-6);
+  // vertical gridlines with % ticks
+  c.font='600 8px "IBM Plex Mono",monospace';
+  const step=maxVal>3?1:.5,gridMax=Math.ceil(maxVal/step)*step;
+  c.strokeStyle='#eef1f7';c.lineWidth=1;
+  for(let v=0;v<=gridMax;v+=step){
+    const x=p.l+Math.min(v,maxVal)/maxVal*pw;
+    if(v>0){c.beginPath();c.moveTo(x,p.t-4);c.lineTo(x,h-p.b+4);c.stroke();}
+    c.fillStyle='#a8b0c2';c.textAlign='center';c.fillText(v.toFixed(step<1?1:0)+'%',x,h-6);
+  }
+
+  // rows, top storey at top / ground at bottom (matches building elevation)
+  c.font='9px "IBM Plex Mono",monospace';
+  for(let row=0;row<n;row++){
+    const floor=n-row,           // floor n..1 top-to-bottom
+          v=floorMaxDrift[floor-1],
+          y=p.t+row*rowH,
+          st=damageState(v,m.limit),
+          barW=Math.max(2,xAt(v)-p.l);
+    if(row%2===0){c.fillStyle='rgba(68,87,232,.025)';c.fillRect(p.l-4,y,pw+8,rowH);}
+    roundRect(c,p.l,y+rowH*.22,pw,rowH*.56,3);c.fillStyle='#eef1f7';c.fill();
+    roundRect(c,p.l,y+rowH*.22,barW,rowH*.56,3);c.fillStyle=st.color;c.fill();
+    c.fillStyle='#5a6376';c.textAlign='right';c.fillText(floorLabel(floor,m.s),p.l-8,y+rowH*.58);
+    c.fillStyle='#3c4570';c.textAlign='left';
+    c.fillText(v.toFixed(2)+'%',p.l+pw+6,y+rowH*.58);
+  }
+
+  const limX=xAt(m.limit);
+  c.strokeStyle='#3c4570';c.setLineDash([3,3]);c.lineWidth=1.2;
+  c.beginPath();c.moveTo(limX,p.t-4);c.lineTo(limX,h-p.b+4);c.stroke();c.setLineDash([]);
 }
 
 function drawProfile(m,response){
@@ -1154,6 +1184,17 @@ function drawProfile(m,response){
   for(let f=0;f<=m.s;f++){const y=yAt(f);c.lineTo(px(Math.abs(floorMaxDisp[f]||0)),y)}
   for(let f=m.s;f>=0;f--){const y=yAt(f);c.lineTo(px(-Math.abs(floorMaxDisp[f]||0)),y)}
   c.closePath();c.fillStyle='rgba(68,87,232,.08)';c.fill();
+  c.strokeStyle='rgba(68,87,232,.28)';c.lineWidth=1;c.stroke();
+
+  // envelope outline + max value callouts at roof level (peak reached at each side)
+  const roofMax=Math.abs(floorMaxDisp[m.s]||0),yRoof=yAt(m.s);
+  c.strokeStyle='#a8b3f0';c.setLineDash([2,3]);c.lineWidth=1;
+  c.beginPath();c.moveTo(px(roofMax),14);c.lineTo(px(roofMax),yRoof);c.stroke();
+  c.beginPath();c.moveTo(px(-roofMax),14);c.lineTo(px(-roofMax),yRoof);c.stroke();
+  c.setLineDash([]);
+  c.font='700 9px "IBM Plex Mono",monospace';c.fillStyle='#5566d6';
+  c.textAlign='left';c.fillText('max '+roofMax.toFixed(0)+'mm',px(roofMax)+3,12);
+  c.textAlign='right';c.fillText('max '+roofMax.toFixed(0)+'mm',px(-roofMax)-3,12);
 
   // live displacement profile
   c.beginPath();
