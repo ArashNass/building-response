@@ -1257,6 +1257,10 @@ function animate(now){
       accumulator-=realSecondsPerStep;
       stepsThisFrame++;
     }
+    // one-off records (real accelerograms, step/pulse tests) auto-pause once finished,
+    // instead of silently running with zero input — the button then offers a clear replay.
+    const mo=m.motion;
+    if(mo.once&&simTime>=mo.duration){running=false;updatePlayUI();}
   }
   drawBuilding(m,r);drawProfile(m,r);drawHistory();drawFloors();drawMotionPreview(m);
   requestAnimationFrame(animate);
@@ -1281,15 +1285,24 @@ document.querySelectorAll('.preset').forEach(b=>b.onclick=()=>apply(b.dataset.pr
     labels();resetState();
   });
 
+function isFinished(){
+  const mo=model().motion;
+  return mo.once&&simTime>=mo.duration;
+}
 function updatePlayUI(){
-  const label=running?'Pause shaking':'Resume shaking',
-        icon=running?'⏸':'▶',
-        statusTxt=running?'● Simulation running':'○ Simulation paused';
+  const finished=isFinished();
+  const label=finished?'Replay':(running?'Pause shaking':'Resume shaking'),
+        icon=finished?'↺':(running?'⏸':'▶'),
+        statusTxt=finished?'○ Finished — replay to run again':(running?'● Simulation running':'○ Simulation paused');
   E.play.textContent=label;
   ['playBtnBuilding','playBtnMotion'].forEach(id=>{const b=$(id);if(b)b.textContent=icon});
-  ['statusText','statusTextMotion'].forEach(id=>{const s=$(id);if(s){s.textContent=statusTxt;s.classList.toggle('live',running)}});
+  ['statusText','statusTextMotion'].forEach(id=>{const s=$(id);if(s){s.textContent=statusTxt;s.classList.toggle('live',running&&!finished)}});
 }
-function togglePlay(){running=!running;updatePlayUI();last=performance.now();}
+function togglePlay(){
+  if(isFinished()){seekTo(0,model());running=true;}
+  else running=!running;
+  updatePlayUI();last=performance.now();
+}
 E.play.onclick=togglePlay;
 $('playBtnBuilding').onclick=togglePlay;
 $('playBtnMotion').onclick=togglePlay;
