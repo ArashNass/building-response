@@ -53,10 +53,14 @@ h1{margin:0;font-family:var(--disp);font-weight:700;font-size:clamp(1.9rem,3.4vw
 .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow)}
 
 /* ---------- controls ---------- */
-.controls{padding:22px;position:sticky;top:16px}
+.controls{padding:20px;position:sticky;top:16px}
 .panel-label{display:flex;align-items:center;justify-content:space-between;margin:0 0 4px;font-family:var(--mono);font-size:.68rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--dim2)}
 .panel-title{margin:0 0 16px;font-family:var(--disp);font-size:1.05rem;font-weight:600}
-.presets{display:flex;flex-direction:column;gap:7px;margin-bottom:19px}
+.quickstart{border:1px solid var(--line);border-radius:12px;background:var(--panel-soft);padding:12px;margin-bottom:20px}
+.quickstart-h{margin:0 0 9px;font-family:var(--mono);font-size:.66rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--dim2)}
+.section-cap{margin:20px 0 10px;font-family:var(--mono);font-size:.64rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--dim2);border-top:1px solid var(--line);padding-top:16px}
+.section-cap:first-of-type{border-top:none;padding-top:0;margin-top:2px}
+.presets{display:flex;flex-direction:column;gap:6px;margin-bottom:0}
 .preset{display:flex;justify-content:space-between;align-items:center;gap:8px;min-height:48px;border:1px solid var(--line);border-radius:10px;background:var(--panel-soft);color:var(--dim);font-family:var(--sans);font-size:.76rem;font-weight:600;cursor:pointer;padding:0 13px;text-align:left;transition:.15s}
 .preset:hover{border-color:#c9d3ea}
 .preset b{color:var(--text);font-weight:600;font-size:.8rem}
@@ -64,12 +68,12 @@ h1{margin:0;font-family:var(--disp);font-weight:700;font-size:clamp(1.9rem,3.4vw
 .preset.active{border-color:var(--indigo);background:rgba(68,87,232,.06);color:var(--indigo-deep)}
 .preset.active b{color:var(--indigo-deep)}
 
-.field{margin-bottom:16px}
+.field{margin-bottom:13px}
 label{display:flex;justify-content:space-between;gap:10px;margin-bottom:7px;color:var(--dim);font-size:.75rem;font-weight:600;font-family:var(--mono)}
 .val{color:var(--indigo-deep);font-weight:600}
 select,input[type=number]{width:100%;min-height:40px;border:1px solid var(--line);border-radius:8px;background:var(--panel-soft);color:var(--text);padding:8px 10px;font-family:var(--mono);font-size:.78rem}
 input[type=range]{width:100%;accent-color:var(--indigo);height:20px}
-.hint{margin:5px 0 0;color:var(--dim2);font-size:.68rem;line-height:1.4}
+.hint{margin:4px 0 0;color:var(--dim2);font-size:.66rem;line-height:1.35;opacity:.85}
 .upload-row{display:flex;gap:7px;margin-top:8px}
 
 .motion-toolbar{display:flex;flex-wrap:wrap;gap:16px;align-items:flex-end;margin-bottom:10px;padding-bottom:14px;border-bottom:1px solid var(--line)}
@@ -163,10 +167,14 @@ h1{margin:0;font-family:var(--disp);font-weight:700;font-size:clamp(1.9rem,3.4vw
 .layout{display:grid;grid-template-columns:320px 1fr;gap:18px;align-items:start}
 .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow)}
 
-.controls{padding:22px;position:sticky;top:16px}
+.controls{padding:20px;position:sticky;top:16px}
 .panel-label{margin:0 0 4px;font-family:var(--mono);font-size:.68rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--dim2)}
 .panel-title{margin:0 0 16px;font-family:var(--disp);font-size:1.05rem;font-weight:600}
-.presets{display:flex;flex-direction:column;gap:7px;margin-bottom:19px}
+.quickstart{border:1px solid var(--line);border-radius:12px;background:var(--panel-soft);padding:12px;margin-bottom:20px}
+.quickstart-h{margin:0 0 9px;font-family:var(--mono);font-size:.66rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--dim2)}
+.section-cap{margin:20px 0 10px;font-family:var(--mono);font-size:.64rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--dim2);border-top:1px solid var(--line);padding-top:16px}
+.section-cap:first-of-type{border-top:none;padding-top:0;margin-top:2px}
+.presets{display:flex;flex-direction:column;gap:6px;margin-bottom:0}
 .preset{display:flex;justify-content:space-between;align-items:center;gap:8px;min-height:48px;border:1px solid var(--line);border-radius:10px;background:var(--panel-soft);color:var(--dim);font-family:var(--sans);font-size:.76rem;font-weight:600;cursor:pointer;padding:0 13px;text-align:left;transition:.15s}
 .preset:hover{border-color:#c9d3ea}
 .preset b{color:var(--text);font-weight:600;font-size:.8rem}
@@ -174,12 +182,12 @@ h1{margin:0;font-family:var(--disp);font-weight:700;font-size:clamp(1.9rem,3.4vw
 .preset.active{border-color:var(--indigo);background:rgba(68,87,232,.06);color:var(--indigo-deep)}
 .preset.active b{color:var(--indigo-deep)}
 
-.field{margin-bottom:16px}
+.field{margin-bottom:13px}
 label{display:flex;justify-content:space-between;gap:10px;margin-bottom:7px;color:var(--dim);font-size:.75rem;font-weight:600;font-family:var(--mono)}
 .val{color:var(--indigo-deep);font-weight:600}
 select,input[type=number]{width:100%;min-height:40px;border:1px solid var(--line);border-radius:8px;background:var(--panel-soft);color:var(--text);padding:8px 10px;font-family:var(--mono);font-size:.78rem}
 input[type=range]{width:100%;accent-color:var(--indigo);height:20px}
-.hint{margin:5px 0 0;color:var(--dim2);font-size:.68rem;line-height:1.4}
+.hint{margin:4px 0 0;color:var(--dim2);font-size:.66rem;line-height:1.35;opacity:.85}
 
 .tabbar{display:flex;gap:6px;margin-bottom:16px;background:var(--panel-soft);border:1px solid var(--line);border-radius:10px;padding:3px}
 .tabbtn{flex:1;min-height:34px;border:none;border-radius:8px;background:transparent;color:var(--dim);font-family:var(--sans);font-size:.74rem;font-weight:600;cursor:pointer}
@@ -329,8 +337,12 @@ table.modaltable tr.dominant td{color:var(--indigo-deep);font-weight:600}
   <p class="panel-label">Configuration</p>
   <h2 class="panel-title">Building &amp; ground motion</h2>
 
-  <div class="presets" id="presets"></div>
+  <section class="quickstart">
+    <p class="quickstart-h">Quick start — pick an example</p>
+    <div class="presets" id="presets"></div>
+  </section>
 
+  <p class="section-cap">Structure</p>
   <div class="field"><label>Structural system</label>
     <select id="material">
       <option value="concrete">Reinforced concrete frame</option>
@@ -347,6 +359,7 @@ table.modaltable tr.dominant td{color:var(--indigo-deep);font-weight:600}
   <div class="field"><label>Relative mass <span class="val" id="massVal">55%</span></label><input id="mass" type="range" min="20" max="100" value="55"></div>
   <div class="field"><label>Damping ratio <span class="val" id="dampVal">5%</span></label><input id="damping" type="range" min="1" max="20" value="5"></div>
 
+  <p class="section-cap">Analysis</p>
   <div class="field" id="freqField"><label>Dominant period (exploration) <span class="val" id="freqVal">0.8 s</span></label><input id="frequency" type="range" min="3" max="25" value="8">
     <p class="hint" id="freqHint">Defaults to this profile's characteristic period — drag to explore resonance at other periods.</p>
   </div>
