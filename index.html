@@ -1082,9 +1082,11 @@ function drawFloors(){
   if(!floorMaxDrift.length)return;
   const legendH=30,p={l:44,r:46,t:14+legendH,b:22},pw=w-p.l-p.r,ph=h-p.t-p.b,
         n=floorMaxDrift.length,
-        maxVal=Math.max(m.limit*1.6,...floorMaxDrift,.01),
+        rawMax=Math.max(m.limit*1.6,...floorMaxDrift,.01),
+        step=rawMax>3?1:.5,
+        maxVal=Math.ceil(rawMax/step)*step,   // rounded up to a whole grid step so gridlines and bars share the same scale exactly
         rowH=ph/n,
-        xAt=v=>p.l+Math.min(v,maxVal)/maxVal*pw;
+        xAt=v=>p.l+(v/maxVal)*pw;
 
   // legend row 1: damage states
   c.font='700 8px "IBM Plex Mono",monospace';c.textAlign='left';
@@ -1099,12 +1101,11 @@ function drawFloors(){
   c.beginPath();c.moveTo(p.l,22);c.lineTo(p.l+14,22);c.stroke();c.setLineDash([]);
   c.fillStyle='#3c4570';c.fillText('SELECTED THRESHOLD '+m.limit.toFixed(2)+'%',p.l+19,25);
 
-  // vertical gridlines with % ticks
+  // vertical gridlines with % ticks — same scale (maxVal) as the bars below
   c.font='600 8px "IBM Plex Mono",monospace';
-  const step=maxVal>3?1:.5,gridMax=Math.ceil(maxVal/step)*step;
   c.strokeStyle='#eef1f7';c.lineWidth=1;
-  for(let v=0;v<=gridMax;v+=step){
-    const x=p.l+Math.min(v,maxVal)/maxVal*pw;
+  for(let v=0;v<=maxVal+1e-9;v+=step){
+    const x=xAt(v);
     if(v>0){c.beginPath();c.moveTo(x,p.t-4);c.lineTo(x,h-p.b+4);c.stroke();}
     c.fillStyle='#a8b0c2';c.textAlign='center';c.fillText(v.toFixed(step<1?1:0)+'%',x,h-6);
   }
