@@ -279,7 +279,7 @@ table.modaltable tr.dominant td{color:var(--indigo-deep);font-weight:600}
 <meta name="twitter:title" content="Building Response Simulator - Ground Motion | Arash Nassirpour">
 <meta name="twitter:description" content="Simulate structural response to earthquake ground motion in real time using adjustable building properties and live displacement and acceleration plots."><meta name="twitter:image" content="https://arashnassirpour.com/building-response/og-image.png">
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"Building Response Simulator","description":"Simulate structural response to earthquake ground motion in real time using adjustable building properties and live displacement and acceleration plots.","url":"https://arashnassirpour.com/building-response/","applicationCategory":"EducationalApplication","operatingSystem":"Any","isAccessibleForFree":true,"author":{"@type":"Person","name":"Arash Nassirpour","url":"https://arashnassirpour.com/about/"}}</script>
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-0WERZ6WKQY"></script><script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag("js",new Date());gtag("config","G-0WERZ6WKQY");</script>
+<script defer src="/assets/analytics.js?v=2"></script>
 <style>
 /* phone layout: let grid tracks shrink below their content so nothing pushes the page wider than the screen */
 @media(max-width:1000px){.layout,.main{grid-template-columns:minmax(0,1fr)}.layout>*,.main>*{min-width:0}.metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.chart-row{grid-template-columns:minmax(0,1fr)}.chart-row>*{min-width:0}}
@@ -289,6 +289,10 @@ table.modaltable tr.dominant td{color:var(--indigo-deep);font-weight:600}
 /* phones: 16px form fields stop iOS Safari zooming the page in when one is tapped */
 @media (max-width:760px){input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=color]):not([type=file]),select,textarea{font-size:16px!important}}
 </style>
+
+<script defer src="/assets/engagement.js?v=1"></script>
+<script type="module" src="/assets/vitals.js?v=1"></script>
+<link rel="stylesheet" href="/assets/tool-guide.css?v=1">
 </head>
 <body>
 <!-- shared site header -->
@@ -431,11 +435,11 @@ table.modaltable tr.dominant td{color:var(--indigo-deep);font-weight:600}
   </div>
 
   <div class="buttons">
-    <button class="primary" id="playBtn">Pause shaking</button>
+    <button class="primary" id="playBtn" data-track-action="play_model">Pause shaking</button>
     <button class="secondary" id="resetBtn">Reset</button>
   </div>
   <div class="buttons" style="margin-top:8px">
-    <button class="secondary" id="exportBtn" style="flex:1">Export snapshot (JSON)</button>
+    <button class="secondary" id="exportBtn" data-track-action="export_requested" style="flex:1">Export snapshot (JSON)</button>
   </div>
 </aside>
 
@@ -452,7 +456,7 @@ table.modaltable tr.dominant td{color:var(--indigo-deep);font-weight:600}
     <div class="top">
       <div><h2>Ground motion being applied</h2><p>Drag anywhere on the chart to scrub to that moment — the building's full response is recalculated to match.</p></div>
       <div class="card-controls">
-        <button class="icon-btn" id="playBtnMotion" title="Pause / resume">⏸</button>
+        <button class="icon-btn" id="playBtnMotion" data-track-action="play_model" title="Pause / resume">⏸</button>
         <div class="status live" id="statusTextMotion">● Simulation running</div>
       </div>
     </div>
@@ -509,7 +513,7 @@ table.modaltable tr.dominant td{color:var(--indigo-deep);font-weight:600}
           <option value="structure" selected>2D</option>
           <option value="mdof">MDOF</option>
         </select>
-        <button class="icon-btn" id="playBtnBuilding" title="Pause / resume">⏸</button>
+        <button class="icon-btn" id="playBtnBuilding" data-track-action="play_model" title="Pause / resume">⏸</button>
         <div class="status live" id="statusText">● Simulation running</div>
       </div>
     </div>
@@ -1419,7 +1423,7 @@ function animate(now){
     // one-off records (real accelerograms, step/pulse tests) auto-pause once finished,
     // instead of silently running with zero input — the button then offers a clear replay.
     const mo=m.motion;
-    if(mo.once&&simTime>=mo.duration){running=false;updatePlayUI();}
+    if(mo.once&&simTime>=mo.duration){running=false;updatePlayUI();window.PlatformMetrics?.complete('simulate');}
   }
   drawBuilding(m,r);drawProfile(m,r);drawHistory();drawFloors();drawMotionPreview(m);
   requestAnimationFrame(animate);
@@ -1561,11 +1565,12 @@ E.exportBtn.onclick=()=>{
   };
   const blob=new Blob([JSON.stringify(snapshot,null,2)],{type:'application/json'});
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);
-  a.download='building-response-snapshot.json';a.click();URL.revokeObjectURL(a.href);
+  a.download='building-response-snapshot.json';a.click();window.PlatformMetrics?.emit('export_ready',{format:'json'});URL.revokeObjectURL(a.href);
 };
 
 labels();resetState();requestAnimationFrame(animate);
 </script>
+<section class="platform-guide" aria-labelledby="platform-guide-title"><h2 id="platform-guide-title">Using building response</h2><p>Explore time-dependent motion of a simplified building under earthquake excitation. Compare the applied ground motion with displacement and storey drift.</p><details><summary>Try a worked example</summary><ol><li>Start with a built-in example and play the response.</li><li>Change damping while keeping the building and excitation fixed.</li><li>Compare the response-history and drift plots before exporting results.</li></ol></details><nav aria-label="Related tools"><a href="/modal-analysis/">Modal analysis</a><a href="/ground-motion/">Ground motion analysis</a></nav></section>
 <footer class="site-ft"><style>
 .site-ft{background:#0f2350;border-top:1px solid rgba(255,255,255,.08);flex-shrink:0;line-height:normal;font-family:Inter,'Segoe UI',system-ui,sans-serif}
 .site-ft .ft-in{max-width:1080px;margin:0 auto;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;padding:14px 24px}
